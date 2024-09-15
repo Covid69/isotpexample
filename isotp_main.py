@@ -5,20 +5,23 @@ import can
 #from can.interfaces.vector import VectorBus
 # def my_error_handler(error):
 # logging.warning('IsoTp error happened : %s - %s' % (error.__class__.__name__, str(error)))   
-bus = can.interface.Bus(bustype='socketcan', channel='vcan0', bitrate=500000)
-addr = isotp.Address(isotp.AddressingMode.Normal_11bits, rxid=0x123, txid=0x456) 
-stack = isotp.CanStack(bus, address=addr, params={"wftmax": 0})
-stack.send(b'hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhtions (i.e. routing takes place on OSI lajyer 4; see ISO 14229-2[8]), the vehicle manufacturer chooses either that the FC parameters BS and STmin vary during the transmission of a single segmented message or that these parameters are static values. Depending on this design decision, the vehicle manufacturer needs to ensure that server implementations are compatible with the respective in-vehicle gateway implementation Hello, this is a long payload sent in small chunk NamTV23 LongTDH1 TuanND53 TuanDV40 MInhTQ35For in-vehicle gateway implementations (i.e. routing takes place on OSI layer 4; see ISO 14229-2[8]), the vehicle manufacturer chooses either that the FC parameters BS and STmin vary during the transmission of a single segmented message or that these parameters are static values. Depending on this design decision, the vehicle manufacturer needs to ensure that server implementations are compatible with the respective in-vehicle gateway implementation Hello, this is a long payload sent in small chunk NamTV23 LongTDH1 TuanND53 TuanDV40 MInhTQ35For in-vehicle gateway implementations (i.e. routing takes place on OSI layer 4; see ISO 14229-2[8]), the vehicle manufacturer chooses either that the FC parameters BS and STmin vary during the transmission of a single segmented message or that these parameters are static values. Depending on this design decision, the vehicle manufacturer needs to ensure that server implementations are compatible with the respective in-vehicle gateway implementation Hello, this is a long payload sent in small chunk NamTV23 LongTDH1 TuanND53 TuanDV40 MInhTQ35For in-vehicle gateway implementations (i.e. routing takes place on OSI layer 4; see ISO 14229-2[8]), the vehicle manufacturer chooses either that the FC parameters BS and STmin vary during the transmission of a single segmented message or that these parameters are static values. Depending on this design decision, the vehicle manufacturer needs to ensure that server implementations are compatible with the respective in-vehicle gateway implementation Hello, this is a long payload sent in small chunk NamTV23 LongTDH1 TuanND53 TuanDV40 MInhTQ35For in-vehicle gateway implementations (i.e. routing takes place on OSI layer 4; see ISO 14229-2[8]), the vehicle manufacturer chooses either that the FC parameters BS and STmin vary during the transmission of a single segmented message or that these parameters are static values. Depending on this design decision, the vehicle manufacturer needs to ensure that server implementations are compatible with the respective in-vehicle gateway implementation Hello, this is a long payload sent in small chunk NamTV23 LongTDH1 TuanND53 TuanDV40 MInhTQ35For in-vehicle gateway implementations (i.e. routing takes place on OSI layer 4; see ISO 14229-2[8]), the vehicle manufacturer chooses either that the FC parameters BS and STmin vary during the transmission of a single segmented message or that these parameters are static values. Depending on this design decision, the vehicle manufacturer needs to ensure that server implementations are compatible with the respective in-vehicle gateway Hello, this is a long payload sent in small chunk NamTV23 LongTDH1 TuanND53 TuanDV40 MInhTQ35For in-vehicle gateway implementations (i.e. routing takes place on OSI layer 4; see ISO 14229-2[8]), the vehicle manufacturer chooses either that the FC parameters BS and STmin vary during the transmission of a single segmented message or that these parameters are static values. Depending on this design decision, the vehicle manufacturer needs to ensure that server implementations are compatible with the respective in-vehicle gateway implementation Hello, this is a long payload sent in small chunk NamTV23 LongTDH1 TuanND53 TuanDV40 MInhTQ35For in-vehicle gateway implementations (i.e. routing takes place on OSI layer 4; see ISO 14229-2[8]), the radfasdfasdfsdfasdfadfadsfvehicle manufacturer chooses either that the FC pdfagfsdgsfgfshghhdharameters BS and STmin vary during the transmission of a single segmented message')
-try:
-    while stack.transmitting():
-        stack.process()
-        time.sleep(stack.sleep_time())
-        print("Payload transmission done.")
-except KeyboardInterrupt:
-    bus.shutdown()
 
+def my_error_handler(error):
+    # Called from a different thread, needs to be thread safe
+    logging.warning('IsoTp error happened : %s - %s' % (error.__class__.__name__, str(error)))
+    
+bus = can.interface.Bus(interface='socketcan', channel='vcan0', bitrate=500000)
+addr = isotp.Address(isotp.AddressingMode.Normal_11bits, rxid=0x123, txid=0x456)
+stack = isotp.CanStack(bus, address=addr, error_handler=my_error_handler)
+
+try:
+    stack.start()
+
+    stack.send(b'Hello, this is a long payload sent in small chunks')    # Non-blocking send, does not raise exception.
+    while stack.transmitting():
+        time.sleep(0.005)
+
+    print("Payload transmission done.") # May have failed, use the error_handler to know
 finally:
-    try:
-        bus.shutdown()
-    except:
-        pass
+    stack.stop()
+    bus.shutdown()
